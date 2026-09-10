@@ -1,0 +1,36 @@
+# ===== Unity generated =====
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]serSettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Asset meta data: .meta files MUST be kept (they hold GUIDs)
+# Do NOT put *.meta in ignore
+
+# ===== Visual Studio / Rider =====
+.vs/
+.idea/
+*.csproj.csproj.user
+.vscode/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Miscellaneous =====
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+opengl4win.txt
+
+# Gradle (Android builds, if any)
+android/
+gradle/
+gradle-appletv/
