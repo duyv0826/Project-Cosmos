@@ -10,10 +10,16 @@
 - [ ] 美术风格方向确定
 - 目标日期：YYYY-MM-DD
 
-## 里程碑 1：首个可玩原型（Playable Prototype）
-- [ ] Unity 工程创建成功并运行一个空场景
-- [ ] 玩家控制移动（`Assets/Scripts/PlayerController.cs`）
-- [ ] 一个核心循环可跑通（哪怕很简陋）
+## 里程碑 1：影子同步原型（Playable Prototype）
+
+> 目标：把核心机制 B「影子同步」做成**最小可玩版本**，验证"滞后半拍诱导"能否跑通、是否有玩法乐趣。
+
+- [ ] Unity 工程创建成功并运行一个 2D 空场景
+- [ ] 玩家角色移动（`Assets/Scripts/PlayerController.cs`）
+- [ ] 影子跟随：实现"影子滞后半拍复读玩家输入"（`Assets/Scripts/ShadowSync.cs`，用固定动作队列记录玩家移动、影子延迟执行）
+- [ ] 最小关卡：一个需要"你和影子配合"的机关（如双开关），单关可通关
+- [ ] 通关即抵达"被光照亮的地方"，触发一次同步的奖励反馈
+- [ ] 奔跑验证：`python -m pytest`？否——本阶段 Unity 手动验证即可；可加一条 `docs:` 记录验证结果
 - 目标日期：YYYY-MM-DD
 
 ## 里程碑 2：垂直切片（Vertical Slice）
