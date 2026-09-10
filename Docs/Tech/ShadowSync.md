@@ -39,6 +39,34 @@ Player 移动一步
 
 ---
 
+## 3.5 输入映射（PlayerController 的 ReadInput）
+
+**设计决策：网格移动 + 键盘方向键/AD**（最贴合"滞后半拍"的离散节奏感）。
+
+逐格移动，每次按键 = 移动一格（非长按滑行），避免连续输入导致队列覆盖过快。
+
+| 用途 | 键位 | 映射动作 |
+|------|------|----------|
+| 上 | `W` / `↑` | `(0, +1)` |
+| 下 | `S` / `↓` | `(0, -1)` |
+| 左 | `A` / `←` | `(-1, 0)` |
+| 右 | `D` / `→` | `(+1, 0)` |
+| 暂停/重置 | `R` | 重置本关（玩家与影子回起点） |
+| 提交序列 | `Space` | （可选）实验功能：预演模式按下后按 `Space` 逐拍播放，观察影子再确认 |
+
+`ReadInput()` 示例（逐格 + 防斜向）：
+```csharp
+Vector2Int ReadInput() {
+    if (Input.GetButtonDown("Vertical"))  return new Vector2Int(0, Input.GetAxisRaw("Vertical") > 0 ? 1 : -1);
+    if (Input.GetButtonDown("Horizontal")) return new Vector2Int(Input.GetAxisRaw("Horizontal") > 0 ? 1 : -1, 0);
+    return Vector2Int.zero; // 一次只响应一个轴向，防止斜向对角
+}
+```
+
+> **关键点**：用 `GetButtonDown`（按下瞬间，格栅节奏）而非 `GetKey`（长按持续）。这一步直接影响影子队列里的"拍"，拍数可预测，机关才稳定。
+
+---
+
 ## 4. 关键脚本（原型骨架）
 
 **PlayerController.cs（玩家移动 + 驱动队列）**
