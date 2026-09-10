@@ -46,7 +46,6 @@ Project-Cosmos/
 
 | 文档 | 位置 | 状态 |
 |------|------|------|
-| 游戏设计文档 GDD | `Docs/GameDesign/GDD.md` | 待填写 |
-| 玩法 / 核心循环 | `Docs/GameDesign/Gameplay.md` | 待填写 |
-| 技术方案 | `Docs/Tech/Architecture.md` | 待填写 |
-| 里程碑规划 | `Docs/Meta/Milestones.md` | 待填写 |
+| 游戏设计文档 GDD | `Docs/GameDesign/GDD.md` | ✅ 已含机制 B |
+| 核心机制「影子同步」技术方案 | `Docs/Tech/ShadowSync.md` | ✅ 已完成 |
+| 里程碑规划 | `Docs/Meta/Milestones.md` | ✅ 里程碑 1 已定
