@@ -48,4 +48,5 @@ Project-Cosmos/
 |------|------|------|
 | 游戏设计文档 GDD | `Docs/GameDesign/GDD.md` | ✅ 已含机制 B |
 | 核心机制「影子同步」技术方案 | `Docs/Tech/ShadowSync.md` | ✅ 已完成 |
+| 里程碑 1 关卡细案「影子之室」 | `Docs/GameDesign/LevelDesign-M1-ShadowRoom.md` | ✅ 设计稿（含 lag=1 双开关约束推演） |
 | 里程碑规划 | `Docs/Meta/Milestones.md` | ✅ 里程碑 1 已定
