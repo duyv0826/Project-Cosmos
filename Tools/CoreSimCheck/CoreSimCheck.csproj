@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>Cosmos.CoreSimCheck</RootNamespace>
+    <AssemblyName>CoreSimCheck</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="..\..\Assets\Scripts\Core\GridPos.cs" Link="Core\GridPos.cs" />
+    <Compile Include="..\..\Assets\Scripts\Core\ShadowRoom.cs" Link="Core\ShadowRoom.cs" />
+    <Compile Include="..\..\Assets\Scripts\Core\ShadowSyncSim.cs" Link="Core\ShadowSyncSim.cs" />
+  </ItemGroup>
+
+</Project>

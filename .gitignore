@@ -34,3 +34,6 @@ opengl4win.txt
 android/
 gradle/
 gradle-appletv/
+# dotnet 验收工具
+/Tools/**/bin/
+/Tools/**/obj/

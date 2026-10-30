@@ -38,9 +38,9 @@ Project-Cosmos/
 
 ## 当前进度
 
-- [ ] 设计文档初稿
-- [ ] 首个可玩原型
-- [ ] 核心玩法验证
+- [x] 设计文档初稿
+- [x] 首个可玩原型（里程碑 1「影子之室」）
+- [ ] 核心玩法验证（待人玩过目手感与教学节拍）
 
 ## 文档索引
 
@@ -49,4 +49,13 @@ Project-Cosmos/
 | 游戏设计文档 GDD | `Docs/GameDesign/GDD.md` | ✅ 已含机制 B |
 | 核心机制「影子同步」技术方案 | `Docs/Tech/ShadowSync.md` | ✅ 已完成 |
 | 里程碑 1 关卡细案「影子之室」 | `Docs/GameDesign/LevelDesign-M1-ShadowRoom.md` | ✅ 设计稿（含 lag=1 双开关约束推演） |
-| 里程碑规划 | `Docs/Meta/Milestones.md` | ✅ 里程碑 1 已定
+| 里程碑规划 | `Docs/Meta/Milestones.md` | ✅ 里程碑 1 已达成 |
+| 开发日志 · M1 落地 | `Docs/Meta/DevLog-2026-10-30-M1.md` | ✅ 已记录（无头验收 + 两个踩坑） |
+| 里程碑 2 关卡细案「余温回廊」 | `Docs/GameDesign/LevelDesign-M2-draft.md` | 🟡 草稿，待定稿 |
+
+## 怎么跑
+
+1. Unity Hub 打开本目录（Unity 6 LTS，6000.0.23f1）。
+2. 打开 `Assets/Scenes/ShadowRoom.unity`，按 Play。空白场景直接按 Play 也行。
+3. WASD / 方向键走一格，`R` 重来；撞墙不消耗拍。
+4. 只想验逻辑：`cd Tools/CoreSimCheck && dotnet run`（不依赖 Unity）。
