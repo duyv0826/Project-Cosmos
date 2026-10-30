@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Cosmos.EditorTools
 {
     /// <summary>
-    /// 验证用：在编辑器里直接搭出某一拍的画面并渲染成 PNG，不进入 Play 模式
+    /// 验证用：在编辑器里直接搭出画面并渲染成 PNG，不进入 Play 模式
     /// （批处理下 Play 模式会挂住）。不参与玩法。
     /// 命令行：Unity.exe -batchmode -projectPath ... -executeMethod Cosmos.EditorTools.PreviewCapture.Run
     /// </summary>
@@ -15,31 +15,37 @@ namespace Cosmos.EditorTools
     {
         private const int Width = 1280;
         private const int Height = 720;
+        private const string OutDir = "C:/Users/duyv/AppData/Local/Temp/";
 
         public static void Run()
         {
-            CaptureOpening();
-            CaptureSyncMoment();
+            Shoot("cosmos_preview_opening.png", new ShadowSyncSim(ShadowRoom.Milestone1()), -1f);
+            Shoot("cosmos_preview_sync_peak.png", SyncSim(), 0.02f);
+            Shoot("cosmos_preview_sync_after.png", SyncSim(), 0.40f);
+            Shoot("cosmos_preview_end.png", EndSim(), 0.12f);
             EditorApplication.Exit(0);
         }
 
-        private static void CaptureOpening()
-        {
-            var sim = new ShadowSyncSim(ShadowRoom.Milestone1());
-            Shoot(sim, "C:/Users/duyv/AppData/Local/Temp/cosmos_preview_opening.png");
-        }
-
-        private static void CaptureSyncMoment()
+        private static ShadowSyncSim SyncSim()
         {
             var sim = new ShadowSyncSim(ShadowRoom.Milestone1());
             sim.TryMove(GridPos.Right);
             sim.TryMove(GridPos.Right);
             sim.TryMove(GridPos.Up);
             sim.TryMove(GridPos.Right); // 拍 4：玩家踩 A，影子落 B
-            Shoot(sim, "C:/Users/duyv/AppData/Local/Temp/cosmos_preview_sync.png");
+            return sim;
         }
 
-        private static void Shoot(ShadowSyncSim sim, string path)
+        private static ShadowSyncSim EndSim()
+        {
+            var sim = SyncSim();
+            sim.TryMove(GridPos.Left);
+            sim.TryMove(GridPos.Up);   // 门
+            sim.TryMove(GridPos.Up);   // 光点
+            return sim;
+        }
+
+        private static void Shoot(string fileName, ShadowSyncSim sim, float burstAt)
         {
             var view = ShadowRoomView.SpawnForPreview(sim);
             var cam = Camera.main;
@@ -47,6 +53,12 @@ namespace Cosmos.EditorTools
             {
                 Debug.LogWarning("[Cosmos] 没找到主相机，截图跳过");
                 return;
+            }
+
+            if (burstAt >= 0f)
+            {
+                var at = sim.ReachedLight ? sim.Room.Light : sim.Room.Door;
+                view.PreviewBurstAt(new Vector3(at.X, at.Y, 0f), burstAt);
             }
 
             var rt = new RenderTexture(Width, Height, 24);
@@ -61,12 +73,12 @@ namespace Cosmos.EditorTools
             RenderTexture.active = null;
             cam.targetTexture = null;
 
-            File.WriteAllBytes(path, tex.EncodeToPNG());
+            File.WriteAllBytes(OutDir + fileName, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);
             rt.Release();
             Object.DestroyImmediate(view.gameObject);
 
-            Debug.Log("[Cosmos] 截图已保存 " + path);
+            Debug.Log("[Cosmos] 截图已保存 " + OutDir + fileName);
         }
     }
 }

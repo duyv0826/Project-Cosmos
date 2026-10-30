@@ -30,6 +30,7 @@ namespace Cosmos.View
 
         private ShadowSyncSim _sim;
         private Sprite _sprite;
+        private Sprite _glowSprite;
 
         private Transform _player;
         private Transform _shadow;
@@ -37,8 +38,12 @@ namespace Cosmos.View
         private Transform _switchB;
         private Transform _door;
         private Transform _light;
-        private Transform _flash;
-        private float _flashTimer;
+        private Transform _burstCore;
+        private Transform _burstRing;
+        private float _burstElapsed = -1f;
+        private float _burstDuration = 1.2f;
+        private float _freeze;
+        private float _stepPulse;
 
         private Vector3 _playerTarget;
         private Vector3 _shadowTarget;
@@ -47,6 +52,7 @@ namespace Cosmos.View
         private GUIStyle _hud;
         private GUIStyle _hint;
         private GUIStyle _big;
+        private bool _debug;
 
         private void Awake()
         {
@@ -57,6 +63,7 @@ namespace Cosmos.View
         public void Initialize(ShadowSyncSim sim)
         {
             _sprite = MakeUnitSprite();
+            _glowSprite = MakeRadialSprite();
             _sim = sim ?? new ShadowSyncSim(ShadowRoom.Milestone1());
             _sim.Emitted += OnSimEvent;
 
@@ -106,6 +113,10 @@ namespace Cosmos.View
                 return;
             }
 
+            // 同步那一瞬间把输入掐住 0.2 秒：让这一拍有重量，而不是走过去的路上顺手开了个门
+            if (Down(KeyCode.F1)) _debug = !_debug;
+            if (_freeze > 0f) return;
+
             if (Down(KeyCode.W) || Down(KeyCode.UpArrow)) TryStep(GridPos.Up);
             else if (Down(KeyCode.S) || Down(KeyCode.DownArrow)) TryStep(GridPos.Down);
             else if (Down(KeyCode.A) || Down(KeyCode.LeftArrow)) TryStep(GridPos.Left);
@@ -152,25 +163,26 @@ namespace Cosmos.View
                 case SimEvent.Step:
                     _playerTarget = ToWorld(_sim.PlayerPos);
                     _shadowTarget = ToWorld(_sim.ShadowPos);
+                    _stepPulse = 1f;
                     break;
 
                 case SimEvent.Sync:
-                    _flashTimer = 0.75f;
-                    _flash.position = ToWorld(_sim.Room.Door);
-                    _flash.gameObject.SetActive(true);
+                    StartBurst(ToWorld(_sim.Room.Door), 1.25f);
+                    _freeze = 0.2f;
                     break;
 
                 case SimEvent.ReachedLight:
-                    _flashTimer = 1.4f;
-                    _flash.position = ToWorld(_sim.Room.Light);
-                    _flash.gameObject.SetActive(true);
+                    StartBurst(ToWorld(_sim.Room.Light), 1.8f);
+                    _freeze = 0.5f;
                     break;
 
                 case SimEvent.Reset:
                     _playerTarget = ToWorld(_sim.PlayerPos);
                     _shadowTarget = _playerTarget;
-                    _flashTimer = 0f;
-                    _flash.gameObject.SetActive(false);
+                    _burstElapsed = -1f;
+                    _burstCore.gameObject.SetActive(false);
+                    _burstRing.gameObject.SetActive(false);
+                    _freeze = 0f;
                     break;
             }
         }
@@ -179,28 +191,87 @@ namespace Cosmos.View
 
         private void Animate()
         {
+            float dt = Time.deltaTime;
+
+            if (_freeze > 0f) _freeze -= dt;
+
             // 逐格移动也要有"落格"的顿感，不要瞬移
-            float t = stepSeconds <= 0f ? 1f : Mathf.Clamp01(Time.deltaTime / stepSeconds);
+            float t = stepSeconds <= 0f ? 1f : Mathf.Clamp01(dt / stepSeconds);
             _player.position = Vector3.Lerp(_player.position, _playerTarget, t);
             _shadow.position = Vector3.Lerp(_shadow.position, _shadowTarget, t);
 
+            // 每落一格弹一下：让"拍"变成可数的事件，而不是瞬移
+            _stepPulse = Mathf.Max(0f, _stepPulse - dt / 0.14f);
+            float bump = 1f + 0.10f * _stepPulse * _stepPulse;
+            _player.localScale = new Vector3(0.6f * bump, 0.6f * bump, 1f);
+            _shadow.localScale = new Vector3(0.52f * bump, 0.52f * bump, 1f);
+
             // 光点呼吸；通关后放大一次
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 2.2f);
-            float lightScale = 0.62f + 0.06f * pulse + (_sim.ReachedLight ? 0.35f : 0f);
+            float lightScale = 0.85f + 0.08f * pulse + (_sim.ReachedLight ? 0.6f : 0f);
             _light.localScale = new Vector3(lightScale, lightScale, 1f);
 
-            if (_flashTimer > 0f)
+            TickBurst(dt);
+        }
+
+        // ---------- 同步光晕 ----------
+
+        private void StartBurst(Vector3 worldPos, float duration)
+        {
+            _burstDuration = duration;
+            _burstElapsed = 0f;
+            _burstCore.position = worldPos;
+            _burstRing.position = worldPos;
+            RenderBurst(0f);
+        }
+
+        private void TickBurst(float dt)
+        {
+            if (_burstElapsed < 0f) return;
+
+            _burstElapsed += dt;
+            RenderBurst(_burstElapsed);
+
+            if (_burstElapsed >= _burstDuration)
             {
-                _flashTimer -= Time.deltaTime;
-                float k = Mathf.Clamp01(1f - _flashTimer / 0.75f);
-                float s = Mathf.Lerp(0.6f, 4.5f, k);
-                _flash.localScale = new Vector3(s, s, 1f);
-                var c = LightColor;
-                c.a = Mathf.Lerp(0.55f, 0f, k);
-                _flash.GetComponent<SpriteRenderer>().color = c;
-                if (_flashTimer <= 0f) _flash.gameObject.SetActive(false);
+                _burstElapsed = -1f;
+                _burstCore.gameObject.SetActive(false);
+                _burstRing.gameObject.SetActive(false);
             }
         }
+
+        /// <summary>
+        /// 两段式：0~0.18 秒亮芯炸开（先给一个"被击中"的感觉），
+        /// 0.08~1.1 秒大环慢慢散掉（余温，不是烟花）。
+        /// </summary>
+        private void RenderBurst(float time)
+        {
+            float coreK = Mathf.Clamp01(time / 0.18f);
+            _burstCore.gameObject.SetActive(coreK < 1f);
+            float coreScale = Mathf.Lerp(1.2f, 3.6f, coreK);
+            _burstCore.localScale = new Vector3(coreScale, coreScale, 1f);
+            var coreColor = LightColor;
+            coreColor.a = 0.95f * (1f - coreK) * (1f - coreK);
+            _burstCore.GetComponent<SpriteRenderer>().color = coreColor;
+
+            float ringK = Mathf.Clamp01((time - 0.08f) / 1.02f);
+            _burstRing.gameObject.SetActive(ringK > 0f && ringK < 1f);
+            float ringScale = Mathf.Lerp(1.4f, 8.0f, ringK);
+            _burstRing.localScale = new Vector3(ringScale, ringScale, 1f);
+            var ringColor = LightColor;
+            ringColor.a = 0.38f * (1f - ringK) * (1f - ringK);
+            _burstRing.GetComponent<SpriteRenderer>().color = ringColor;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>预览用：把光晕定格在某一时刻，供批处理渲图。</summary>
+        public void PreviewBurstAt(Vector3 worldPos, float time)
+        {
+            _burstCore.position = worldPos;
+            _burstRing.position = worldPos;
+            RenderBurst(time);
+        }
+#endif
 
         private void SyncColors()
         {
@@ -273,9 +344,10 @@ namespace Cosmos.View
             _door.position = ToWorld(_sim.Room.Door);
             _door.localScale = new Vector3(0.92f, 0.32f, 1f);
 
-            _light = MakeQuad("Light", root, LightColor, 2).transform;
+            // 光画在玩家之上：站进去的时候是"被光裹住"，而不是"光被方块盖住"
+            _light = MakeQuad("Light", root, LightColor, 7, _glowSprite).transform;
             _light.position = ToWorld(_sim.Room.Light);
-            _light.localScale = new Vector3(0.62f, 0.62f, 1f);
+            _light.localScale = new Vector3(0.85f, 0.85f, 1f);
 
             // 给房间加一圈细边，把构图框住，避免画面糊成一片
             var frame = new Color32(0x2E, 0x34, 0x40, 0xFF);
@@ -284,8 +356,11 @@ namespace Cosmos.View
             MakeEdge("FrameLeft", root, frame, new Vector3(-0.55f, 1.5f, 0f), new Vector3(0.03f, 4.12f, 1f));
             MakeEdge("FrameRight", root, frame, new Vector3(3.55f, 1.5f, 0f), new Vector3(0.03f, 4.12f, 1f));
 
-            _flash = MakeQuad("SyncFlash", root, LightColor, 5).transform;
-            _flash.gameObject.SetActive(false);
+            _burstRing = MakeQuad("BurstRing", root, LightColor, 5, _glowSprite).transform;
+            _burstRing.gameObject.SetActive(false);
+
+            _burstCore = MakeQuad("BurstCore", root, LightColor, 6, _glowSprite).transform;
+            _burstCore.gameObject.SetActive(false);
         }
 
         private void MakeEdge(string name, Transform parent, Color color, Vector3 pos, Vector3 scale)
@@ -307,12 +382,12 @@ namespace Cosmos.View
             _player.localScale = new Vector3(0.6f, 0.6f, 1f);
         }
 
-        private GameObject MakeQuad(string name, Transform parent, Color color, int order)
+        private GameObject MakeQuad(string name, Transform parent, Color color, int order, Sprite sprite = null)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = _sprite;
+            sr.sprite = sprite != null ? sprite : _sprite;
             sr.color = color;
             sr.sortingOrder = order;
             return go;
@@ -326,6 +401,46 @@ namespace Cosmos.View
                 new Rect(0f, 0f, 1f, 1f),
                 new Vector2(0.5f, 0.5f),
                 pixelsPerUnit: 1f);
+        }
+
+        /// <summary>
+        /// 程序生成的径向衰减贴图。没有它，"光"只能画成一个方块——
+        /// 这是本作唯一需要的"美术资产"，96×96，二次衰减让边缘不硬。
+        /// </summary>
+        private static Sprite MakeRadialSprite(int size = 96)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+
+            var pixels = new Color32[size * size];
+            float half = (size - 1) * 0.5f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x - half) / half;
+                    float dy = (y - half) / half;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+
+                    float a = Mathf.Clamp01(1f - r);
+                    a *= a; // 二次衰减：中心实、边缘柔
+
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, a);
+                }
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply();
+
+            return Sprite.Create(
+                tex,
+                new Rect(0f, 0f, size, size),
+                new Vector2(0.5f, 0.5f),
+                pixelsPerUnit: size);
         }
 
         private static Vector3 ToWorld(GridPos p) => new Vector3(p.X, p.Y, 0f);
@@ -348,9 +463,19 @@ namespace Cosmos.View
         {
             EnsureStyles();
 
-            GUI.Label(new Rect(24f, 20f, 620f, 30f), _sim.Describe(), _hud);
-            GUI.Label(new Rect(24f, 52f, 620f, 24f),
-                "WASD / 方向键　走一格　·　R　重来", _hint);
+            GUI.Label(new Rect(24f, 20f, 620f, 24f), "WASD / 方向键　走一格　·　R　重来　·　F1　坐标", _hint);
+
+            // 教学节拍：开局一个字都不提"影子慢半拍"。
+            // 先让玩家自己踩出来；10 拍还没摸到同步，才给一句环境提示（LevelDesign-M1 §2）。
+            if (!_sim.DoorLatched && !_sim.ReachedLight && _sim.Beat >= 10)
+            {
+                GUI.Label(new Rect(24f, 52f, 620f, 24f), "它跟着你，慢了半拍。", _hint);
+            }
+
+            if (_sim.DoorLatched && !_sim.ReachedLight)
+            {
+                GUI.Label(new Rect(24f, 52f, 620f, 24f), "门开了 —— 但你一走，它也走了。", _hint);
+            }
 
             if (_sim.ReachedLight)
             {
@@ -358,6 +483,11 @@ namespace Cosmos.View
                     "你们终于同步了一次", _big);
                 GUI.Label(new Rect(0f, Screen.height * 0.42f + 52f, Screen.width, 30f),
                     "门开了，光在前面　·　按 R 再来一遍", _hint);
+            }
+
+            if (_debug)
+            {
+                GUI.Label(new Rect(24f, Screen.height - 34f, 620f, 24f), _sim.Describe(), _hint);
             }
         }
     }

@@ -122,13 +122,12 @@ namespace Cosmos.Core
             ShadowPos = index >= 0 ? _trail[index] : Room.Start;
         }
 
-        /// <summary>按当前状态算出一句可上屏的说明，表现层与测试共用，避免两套判断。</summary>
+        /// <summary>纯诊断用（游戏内 F1 打开）：拍号与双方坐标。叙事文案归表现层，不放在这里。</summary>
         public string Describe()
         {
-            if (ReachedLight) return "你们终于同步了一次";
-            if (DoorLatched) return "门开了 —— 但它只开了一次";
-            if (Beat == 0) return "它跟着你，慢了半拍";
-            return "拍 " + Beat + "　你" + PlayerPos + "　它" + ShadowPos;
+            return "拍 " + Beat + "　你" + PlayerPos + "　它" + ShadowPos
+                   + (DoorLatched ? "　门 开" : "　门 锁")
+                   + (ReachedLight ? "　已抵达" : "");
         }
     }
 }
