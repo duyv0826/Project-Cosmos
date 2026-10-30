@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """M2「余温回廊」设计稿核验器（纯规则，不依赖 Unity）。
 
-用途：把 Docs/GameDesign/LevelDesign-M2-AfterglowCorridor.md 里的三张逐拍表、
-     几何断言、门参数与窗口覆盖关系，用可执行的方式复核一遍。
+用途：把 Docs/GameDesign/LevelDesign-M2-AfterglowCorridor.md 里的五张逐拍表、
+     几何断言、门参数、无绕过通路、余量算术与落锁边界，用可执行的方式复核一遍。
 
-跑法：python verify_m2.py
+跑法：python verify_m2.py   （期望：通过 118 条，失败 0 条；失败时退出码 1）
 """
 
 from __future__ import annotations
