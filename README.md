@@ -40,6 +40,8 @@ Project-Cosmos/
 
 - [x] 设计文档初稿
 - [x] 首个可玩原型（里程碑 1「影子之室」）
+- [x] 里程碑 2 关卡细案定稿（M2「余温回廊」，设计侧 118 条断言全绿）
+- [ ] 里程碑 2 实现（板 / 时滞门 / 检查点存档）
 - [ ] 核心玩法验证（待人玩过目手感与教学节拍）
 
 ## 文档索引
@@ -51,7 +53,7 @@ Project-Cosmos/
 | 里程碑 1 关卡细案「影子之室」 | `Docs/GameDesign/LevelDesign-M1-ShadowRoom.md` | ✅ 设计稿（含 lag=1 双开关约束推演） |
 | 里程碑规划 | `Docs/Meta/Milestones.md` | ✅ 里程碑 1 已达成 |
 | 开发日志 · M1 落地 | `Docs/Meta/DevLog-2026-10-30-M1.md` | ✅ 已记录（无头验收 + 两个踩坑） |
-| 里程碑 2 关卡细案「余温回廊」 | `Docs/GameDesign/LevelDesign-M2-draft.md` | 🟡 草稿，待定稿 |
+| 里程碑 2 关卡细案「余温回廊」 | `Docs/GameDesign/LevelDesign-M2-AfterglowCorridor.md` | ✅ 定稿 v1.0（三室逐拍表 + 门参数公式 + 约束 G） |
 
 ## 怎么跑
 
@@ -59,3 +61,4 @@ Project-Cosmos/
 2. 打开 `Assets/Scenes/ShadowRoom.unity`，按 Play。空白场景直接按 Play 也行。
 3. WASD / 方向键走一格，`R` 重来；撞墙不消耗拍。
 4. 只想验逻辑：`cd Tools/CoreSimCheck && dotnet run`（不依赖 Unity）。
+5. 验里程碑 2 设计稿的逐拍表与几何断言：`cd Tools/M2Verify && python verify_m2.py`（不依赖 Unity，期望 `通过 118 条，失败 0 条`）。
